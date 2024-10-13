@@ -117,7 +117,7 @@ function DependencyList({ dependencies }: { dependencies: Dependency[] }) {
     <div className="grid gap-4">
       {dependencies.map((dep) => (
         <Card key={dep.name} className="overflow-hidden">
-          <CardHeader className="bg-muted flex-row">
+          <CardHeader className="bg-muted flex-row gap-2">
             <CardTitle className="text-lg">{dep.name}</CardTitle>
             <CardDescription>{dep.type}</CardDescription>
           </CardHeader>
