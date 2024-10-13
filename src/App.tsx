@@ -4,6 +4,7 @@ import { Search, Loader2 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Textarea } from './components/ui/textarea';
+import LoadingDescription from './components/LoadingDescription';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { useDependencyLookup } from './hooks/useDependencyLookup';
@@ -117,7 +118,7 @@ function DependencyList({ dependencies }: { dependencies: Dependency[] }) {
             <CardDescription>{dep.type}</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
-            <p>{dep.description}</p>
+            {dep.isLoading ? <LoadingDescription /> : <p>{dep.description}</p>}
           </CardContent>
         </Card>
       ))}

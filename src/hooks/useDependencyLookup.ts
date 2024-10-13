@@ -6,6 +6,8 @@ export type Dependency = {
   name: string;
   description: string;
   type: 'dependency' | 'devDependency';
+  isLoading: boolean;
+  isError: boolean;
 };
 
 export const useDependencyLookup = () => {
@@ -25,6 +27,20 @@ export const useDependencyLookup = () => {
 
       const data = await response.json();
 
+      setDependencies((prevDeps) =>
+        prevDeps.map((dep) =>
+          dep.name === packageInfo.name
+            ? {
+                ...dep,
+                description: data.description || 'No description available',
+                version: data['dist-tags']?.latest || 'Version unknown',
+                isLoading: false,
+                isError: false
+              }
+            : dep
+        )
+      );
+
       return {
         ...packageInfo,
 
@@ -36,23 +52,20 @@ export const useDependencyLookup = () => {
       let message = '';
       if (err instanceof Error) message = err.message;
       else message = String(error);
-      throw {
-        ...packageInfo,
-        description: `Error: ${message}`,
-        error: true
-      };
+
+      setDependencies((prevDeps) =>
+        prevDeps.map((dep) =>
+          dep.name === packageInfo.name
+            ? {
+                ...dep,
+                description: `Error: ${message}`,
+                isLoading: false,
+                isError: true
+              }
+            : dep
+        )
+      );
     }
-  };
-
-  const processResults = (results: PromiseSettledResult<Dependency>[]) => {
-    return results.map((result) => {
-      if (result.status === 'fulfilled') {
-        return result.value;
-      }
-
-      // If the promise was rejected, return the error object
-      return result.reason;
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -78,9 +91,16 @@ export const useDependencyLookup = () => {
         return;
       }
 
-      const depsResults = await Promise.allSettled(dependencies.map(fetchPackageInfo));
+      setDependencies(
+        dependencies.map((dep) => ({
+          ...dep,
+          description: 'Loading...',
+          isError: false,
+          isLoading: true
+        }))
+      );
 
-      setDependencies(processResults(depsResults));
+      await Promise.all(dependencies.map(fetchPackageInfo));
     } catch (err) {
       let message = '';
       if (err instanceof Error) message = err.message;
