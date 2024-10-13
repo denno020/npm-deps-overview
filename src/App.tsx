@@ -14,7 +14,7 @@ const Alert = ({ children }: PropsWithChildren) => (
   <div className="p-4 text-red-700 bg-red-100 border border-red-200 rounded mt-4">{children}</div>
 );
 
-const DependencyScannerComponent = () => {
+const App = () => {
   const {
     isLoading,
     input,
@@ -130,4 +130,4 @@ function DependencyList({ dependencies }: { dependencies: Dependency[] }) {
   );
 }
 
-export default DependencyScannerComponent;
+export default App;
