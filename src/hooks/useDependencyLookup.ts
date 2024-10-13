@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Fuse from 'fuse.js';
 import { parsePackageJson } from '../utils/parse-package-json';
+import { fetchWithCache } from '../utils/fetch-with-cache';
 
 export type Dependency = {
   name: string;
@@ -14,6 +15,7 @@ export const useDependencyLookup = () => {
   const [input, setInput] = useState('');
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isUsingCache, setIsUsingCache] = useState(true);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,7 +23,7 @@ export const useDependencyLookup = () => {
 
   const fetchPackageInfo = async (packageInfo: Dependency) => {
     try {
-      const response = await fetch(`https://registry.npmjs.org/${packageInfo.name}`);
+      const response = await fetchWithCache(`https://registry.npmjs.org/${packageInfo.name}`, { force: !isUsingCache });
 
       if (!response.ok) throw new Error(`Package "${packageInfo.name}" not found`);
 
@@ -43,9 +45,7 @@ export const useDependencyLookup = () => {
 
       return {
         ...packageInfo,
-
         description: data.description || 'No description available',
-
         version: data['dist-tags']?.latest || 'Version unknown'
       };
     } catch (err) {
@@ -111,6 +111,8 @@ export const useDependencyLookup = () => {
     }
   };
 
+  const handleCacheCheckboxToggle = () => setIsUsingCache((prev) => !prev);
+
   const fuse = new Fuse(dependencies, {
     keys: ['name', 'description'],
     threshold: 0.4
@@ -127,6 +129,8 @@ export const useDependencyLookup = () => {
     dependencies,
     filteredDependencies,
     searchTerm,
-    setSearchTerm
+    setSearchTerm,
+    isUsingCache,
+    handleCacheCheckboxToggle
   };
 };

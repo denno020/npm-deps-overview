@@ -24,7 +24,9 @@ const App = () => {
     dependencies,
     filteredDependencies,
     handleSubmit,
-    error
+    error,
+    isUsingCache,
+    handleCacheCheckboxToggle
   } = useDependencyLookup();
 
   return (
@@ -64,6 +66,29 @@ const App = () => {
                 'Scan Dependencies'
               )}
             </Button>
+            <div className="flex items-start mt-4 gap-2">
+              <input
+                type="checkbox"
+                name="isUsingCache"
+                id="is-using-cache"
+                onChange={handleCacheCheckboxToggle}
+                checked={isUsingCache}
+              />
+              <div className="grid gap-1.5 leading-none" data-id="13">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="is-using-cache"
+                  data-id="14"
+                >
+                  Use Cache
+                </label>
+                <p className="text-sm text-muted-foreground" data-id="15">
+                  Re-use results from queries you've previously run within the past 24 hours.
+                  <br />
+                  Prevents unnecessarily hitting the NPM API.
+                </p>
+              </div>
+            </div>
           </form>
           {error && <Alert>{error}</Alert>}
         </CardContent>
