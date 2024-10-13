@@ -10,7 +10,9 @@ export const parsePackageJson = (json: string) => {
       deps.push({
         name,
         description: `Description for ${name} (version ${version})`, // In a real app, fetch this from an API
-        type
+        type,
+        isLoading: false,
+        isError: false
       });
     }
   };
