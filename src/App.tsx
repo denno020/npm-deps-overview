@@ -88,8 +88,12 @@ const DependencyScannerComponent = () => {
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
-                <TabsTrigger value="devDependencies">Dev Dependencies</TabsTrigger>
+                <TabsTrigger value="dependencies">
+                  Dependencies ({filteredDependencies.filter((dep) => dep.type === 'dependency').length})
+                </TabsTrigger>
+                <TabsTrigger value="devDependencies">
+                  Dev Dependencies({filteredDependencies.filter((dep) => dep.type === 'devDependency').length})
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="all">
                 <DependencyList dependencies={filteredDependencies} />
