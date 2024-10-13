@@ -1,7 +1,7 @@
-import { resolve, dirname } from 'path';
+import { resolve, dirname } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
