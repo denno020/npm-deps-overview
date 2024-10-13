@@ -1,194 +1,128 @@
-import { useState } from 'react';
-
+import type { PropsWithChildren } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 
-const Alert = ({ children }) => (
-  <div className="p-4 text-red-700 bg-red-100 border border-red-200 rounded">{children}</div>
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
+import { Textarea } from './components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { useDependencyLookup } from './hooks/useDependencyLookup';
+import type { Dependency } from './hooks/useDependencyLookup';
+
+const Alert = ({ children }: PropsWithChildren) => (
+  <div className="p-4 text-red-700 bg-red-100 border border-red-200 rounded mt-4">{children}</div>
 );
 
-const DependencyGroup = ({ title, packages }) => {
-  if (!packages || packages.length === 0) return null;
+const DependencyScannerComponent = () => {
+  const {
+    isLoading,
+    input,
+    setInput,
+    searchTerm,
+    setSearchTerm,
+    dependencies,
+    filteredDependencies,
+    handleSubmit,
+    error
+  } = useDependencyLookup();
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-xl font-semibold mt-6 mb-3">{title}</h2>
-
-      {packages.map((pkg, index) => (
-        <div
-          key={index}
-          className={`p-4 rounded border ${pkg.error ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
-        >
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold">{pkg.name}</h3>
-
-              {!pkg.error && <div className="text-sm text-gray-500">v{pkg.version}</div>}
+    <div className="container mx-auto p-4 max-w-4xl">
+      <h1 className="text-3xl font-bold mb-6 text-center">NPM Dependency Overview</h1>
+      <div className="mb-6">
+        <p className="w-full mb-6 text-lg font-normal text-gray-500 lg:text-xl dark:text-gray-400">
+          Use this tool to scan your package.json for dependencies (regular and dev), and list a description of each
+        </p>
+        <p>
+          I built this tool to make it easier to onboard into a new project, and quickly get an overview of the
+          dependencies available in those projects
+        </p>
+      </div>
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Scan Your package.json</CardTitle>
+          <CardDescription>
+            Paste your package.json content below and click 'Scan Dependencies' to analyze.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <Textarea
+              placeholder="Paste your package.json here"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="h-48 mb-4"
+            />
+            <Button className="w-full" disabled={isLoading} type="submit">
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Scanning Dependencies...
+                </>
+              ) : (
+                'Scan Dependencies'
+              )}
+            </Button>
+          </form>
+          {error && <Alert>{error}</Alert>}
+        </CardContent>
+      </Card>
+      {dependencies.length > 0 && (
+        <Card className="dependency-results">
+          <CardHeader>
+            <CardTitle>Scan Results</CardTitle>
+            <CardDescription>Found {filteredDependencies.length} dependencies in total.</CardDescription>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Fuzzy search dependencies..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
             </div>
-
-            {pkg.specifiedVersion && <div className="text-sm text-gray-500">Specified: {pkg.specifiedVersion}</div>}
-          </div>
-
-          <p className="mt-1">{pkg.description}</p>
-        </div>
-      ))}
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
+                <TabsTrigger value="devDependencies">Dev Dependencies</TabsTrigger>
+              </TabsList>
+              <TabsContent value="all">
+                <DependencyList dependencies={filteredDependencies} />
+              </TabsContent>
+              <TabsContent value="dependencies">
+                <DependencyList dependencies={filteredDependencies.filter((dep) => dep.type === 'dependency')} />
+              </TabsContent>
+              <TabsContent value="devDependencies">
+                <DependencyList dependencies={filteredDependencies.filter((dep) => dep.type === 'devDependency')} />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
 
-export default function NPMPackageLookup() {
-  const [input, setInput] = useState('');
-
-  const [regularDeps, setRegularDeps] = useState([]);
-
-  const [devDeps, setDevDeps] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-
-  const [error, setError] = useState('');
-
-  const parsePackageJson = (input) => {
-    try {
-      const parsed = JSON.parse(input);
-
-      const deps = parsed.dependencies || {};
-
-      const devDeps = parsed.devDependencies || {};
-
-      return {
-        dependencies: Object.entries(deps).map(([name, version]) => ({
-          name,
-
-          specifiedVersion: version
-        })),
-
-        devDependencies: Object.entries(devDeps).map(([name, version]) => ({
-          name,
-
-          specifiedVersion: version
-        }))
-      };
-    } catch (e) {
-      const packageNames = input
-
-        .split(/[\s,]+/)
-
-        .map((pkg) => pkg.trim())
-
-        .filter((pkg) => pkg);
-
-      return {
-        dependencies: packageNames.map((name) => ({ name })),
-
-        devDependencies: []
-      };
-    }
-  };
-
-  const fetchPackageInfo = async (packageInfo) => {
-    try {
-      const response = await fetch(`https://registry.npmjs.org/${packageInfo.name}`);
-
-      if (!response.ok) throw new Error(`Package "${packageInfo.name}" not found`);
-
-      const data = await response.json();
-
-      return {
-        ...packageInfo,
-
-        description: data.description || 'No description available',
-
-        version: data['dist-tags']?.latest || 'Version unknown'
-      };
-    } catch (err) {
-      throw {
-        ...packageInfo,
-
-        description: `Error: ${err.message}`,
-
-        error: true
-      };
-    }
-  };
-
-  const processResults = (results) => {
-    return results.map((result) => {
-      if (result.status === 'fulfilled') {
-        return result.value;
-      } else {
-        // If the promise was rejected, return the error object
-
-        return result.reason;
-      }
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    setError('');
-
-    if (!input.trim()) {
-      setError('Please enter package names or paste a package.json file');
-
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const { dependencies, devDependencies } = parsePackageJson(input);
-
-      if (dependencies.length === 0 && devDependencies.length === 0) {
-        setError('No dependencies found in input');
-
-        setLoading(false);
-
-        return;
-      }
-
-      const [depsResults, devDepsResults] = await Promise.all([
-        Promise.allSettled(dependencies.map(fetchPackageInfo)),
-
-        Promise.allSettled(devDependencies.map(fetchPackageInfo))
-      ]);
-
-      setRegularDeps(processResults(depsResults));
-
-      setDevDeps(processResults(devDepsResults));
-    } catch (err) {
-      setError('Error processing input: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+function DependencyList({ dependencies }: { dependencies: Dependency[] }) {
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <h1 className="text-2xl font-bold mb-4">NPM Package Description Lookup</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Paste your package.json content or enter package names (separated by spaces, commas, or newlines)"
-          className="w-full p-2 border rounded min-h-[100px] font-mono text-sm"
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
-        >
-          {loading ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />}
-          Look up packages
-        </button>
-      </form>
-
-      {error && <Alert>{error}</Alert>}
-
-      <DependencyGroup title="Dependencies" packages={regularDeps} />
-
-      <DependencyGroup title="Dev Dependencies" packages={devDeps} />
+    <div className="grid gap-4">
+      {dependencies.map((dep) => (
+        <Card key={dep.name} className="overflow-hidden">
+          <CardHeader className="bg-muted">
+            <CardTitle className="text-lg">{dep.name}</CardTitle>
+            <CardDescription>{dep.type}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p>{dep.description}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
+
+export default DependencyScannerComponent;

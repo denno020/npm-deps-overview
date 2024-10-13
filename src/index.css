@@ -34,6 +34,14 @@ body {
   min-height: 100vh;
 }
 
+body:has(.dependency-results) {
+  align-items: flex-start;
+}
+
+#root {
+  width: 100%;
+}
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
