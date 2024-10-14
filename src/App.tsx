@@ -143,7 +143,11 @@ function DependencyList({ dependencies }: { dependencies: Dependency[] }) {
       {dependencies.map((dep) => (
         <Card key={dep.name} className="overflow-hidden">
           <CardHeader className="bg-muted flex-row gap-2">
-            <CardTitle className="text-lg">{dep.name}</CardTitle>
+            <CardTitle className="text-lg">
+              <a href={`https://www.npmjs.com/package/${dep.name}`} target="_blank" rel="noreferrer">
+                {dep.name}
+              </a>
+            </CardTitle>
             <CardDescription>{dep.type}</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
